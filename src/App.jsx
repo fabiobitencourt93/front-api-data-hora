@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 
-// Troque pela URL do seu Web Service no Render
-const API_URL = 'https://SUA-URL.onrender.com/api/datetime';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function App() {
   const [dateTime, setDateTime] = useState(null);
@@ -13,12 +12,16 @@ export default function App() {
     setErro(null);
 
     try {
+      if (!API_URL) {
+        throw new Error('Configure a variável VITE_API_URL com a URL da API.');
+      }
+
       const response = await fetch(API_URL, { cache: 'no-store' });
       if (!response.ok) throw new Error('Falha ao consultar a API');
       const dados = await response.json();
       setDateTime(dados);
     } catch (err) {
-      setErro(err.message);
+      setErro(err instanceof Error ? err.message : 'Falha ao consultar a API');
     } finally {
       if (!silencioso) setLoading(false);
     }
@@ -27,7 +30,8 @@ export default function App() {
   useEffect(() => {
     buscarDataHora();
 
-    // Atualiza a cada 1 segundo em segundo plano
+    if (!API_URL) return;
+
     const intervalo = setInterval(() => {
       buscarDataHora(true);
     }, 1000);
@@ -39,7 +43,7 @@ export default function App() {
     <div style={{ fontFamily: 'sans-serif', textAlign: 'center', marginTop: '4rem' }}>
       <h1>Data e Hora Atuais</h1>
 
-      {loading && <p>Conectando à API no Render...</p>}
+      {loading && <p>Conectando à API...</p>}
 
       {erro && <p style={{ color: 'red' }}>Erro: {erro}</p>}
 
